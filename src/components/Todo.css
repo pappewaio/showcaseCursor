@@ -1,0 +1,105 @@
+.todo-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.todo-container h2 {
+  color: #005293;  /* Swedish blue */
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.todo-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.todo-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #E6E6E6;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.todo-input:focus {
+  outline: none;
+  border-color: #005293;  /* Swedish blue */
+}
+
+.todo-button {
+  padding: 0.75rem 1.5rem;
+  background: #FECC02;  /* Swedish yellow */
+  color: #005293;  /* Swedish blue */
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: transform 0.1s;
+}
+
+.todo-button:hover {
+  transform: translateY(-1px);
+  background: #FFD84D;
+}
+
+.todo-button:active {
+  transform: translateY(0);
+}
+
+.todo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #E6E6E6;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.todo-item:hover {
+  background-color: #F5F5F5;
+}
+
+.todo-item:last-child {
+  border-bottom: none;
+}
+
+.todo-checkbox {
+  width: 20px;
+  height: 20px;
+  margin-right: 1rem;
+  border: 2px solid #005293;  /* Swedish blue */
+  cursor: pointer;
+}
+
+.todo-text {
+  flex: 1;
+  color: #333;
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.empty-message {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  margin-top: 2rem;
+} 

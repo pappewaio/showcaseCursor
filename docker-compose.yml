@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  showcase:
+    build: .
+    ports:
+      - "3001:80"
+    volumes:
+      - ./README.md:/usr/share/nginx/html/README.md:ro 
