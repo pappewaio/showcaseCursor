@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Task Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            border-bottom-color: #2196F3;
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+
+        .task-tree {
+            border-right: 1px solid #ddd;
+            padding-right: 20px;
+            overflow-y: auto;
+        }
+
+        .task-details {
+            overflow-y: auto;
+            padding-left: 20px;
+        }
+
+        .task-item {
+            padding: 10px;
+            margin: 4px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .task-item:hover {
+            background: #f0f0f0;
+        }
+
+        .task-item.selected {
+            border-left: 3px solid #2196F3;
+            background: #e3f2fd;
+        }
+
+        .task-item.completed {
+            opacity: 0.7;
+        }
+
+        .task-item.category {
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .task-item.cat-lokaler {
+            background: #e6d5f0;
+        }
+
+        .task-item.cat-personal {
+            background: #f5c2d5;
+        }
+
+        .task-item.cat-vardval {
+            background: #d4edda;
+        }
+
+        .task-item.cat-it {
+            background: #fff3cd;
+        }
+
+        .task-children {
+            margin-left: 20px;
+        }
+
+        .expand-icon {
+            width: 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .task-title {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-assignees {
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .progress-bar {
+            width: 40px;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 11px;
+            color: #666;
+            width: 30px;
+            text-align: right;
+        }
+
+        .task-dates {
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .task-time {
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .status-badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .detail-field {
+            margin-bottom: 20px;
+        }
+
+        .detail-field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .detail-field input,
+        .detail-field textarea,
+        .detail-field select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 13px;
+        }
+
+        .detail-field textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .date-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #e7f3ff;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .date-badge.conflict {
+            background: #ffe7e7;
+            color: #c00;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 13px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .button:hover {
+            background: #1976D2;
+        }
+
+        .button.secondary {
+            background: #6c757d;
+        }
+
+        .button.secondary:hover {
+            background: #5a6268;
+        }
+
+        .button.success {
+            background: #4CAF50;
+        }
+
+        .button.success:hover {
+            background: #45a049;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .time-entries {
+            margin-top: 20px;
+        }
+
+        .time-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: #f5f5f5;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .meeting-list {
+            max-width: 900px;
+        }
+
+        .meeting-task {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f9f9f9;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+        }
+
+        .meeting-task h3 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .meeting-task p {
+            font-size: 13px;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .agenda-output {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .assignee-select {
+            margin: 10px 0;
+        }
+
+        .assignee-checkbox {
+            margin: 5px 10px 5px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .toolbar {
+            margin-bottom: 15px;
+        }
+
+        .progress-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-input input {
+            width: 80px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Executive Task Management System</h1>
+            <p style="color: #666; font-size: 14px;">NuoCare - Styrelsearbete & Projektuppföljning</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('tasks')">Uppgifter</button>
+            <button class="tab" onclick="switchTab('meeting')">Möte</button>
+            <button class="tab" onclick="switchTab('board')">Styrelsebeslut</button>
+        </div>
+
+        <div id="tasks-tab" class="tab-content active">
+            <div class="two-column">
+                <div class="task-tree">
+                    <div class="toolbar">
+                        <button class="button" onclick="addNewRootTask()">+ Ny uppgift</button>
+                    </div>
+                    <div id="task-tree-content"></div>
+                </div>
+                <div class="task-details">
+                    <div id="task-details-content">
+                        <p style="color: #999; text-align: center; margin-top: 50px;">Välj en uppgift för att visa detaljer</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="meeting-tab" class="tab-content">
+            <div class="meeting-list">
+                <h2>Aktiva uppgifter för mötesgranskning</h2>
+                <div id="meeting-content"></div>
+            </div>
+        </div>
+
+        <div id="board-tab" class="tab-content">
+            <h2>Styrelsebeslut</h2>
+            <button class="button" onclick="generateDagordning()">Generera Dagordning</button>
+            <div id="agenda-output"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let data = {
+            tasks: [],
+            timeEntries: [],
+            currentUser: 'Martin',
+            users: ['Martin', 'Jesper', 'Darek', 'Richard']
+        };
+        let selectedTaskId = null;
+        let expandedTasks = {};
+
+        // Initialize
+        function init() {
+            loadData();
+            renderTaskTree();
+            renderMeetingView();
+        }
+
+        // Load data from localStorage or initialize with sample data
+        function loadData() {
+            const stored = localStorage.getItem('executive-data');
+            if (stored) {
+                data = JSON.parse(stored);
+            } else {
+                initializeSampleData();
+                saveData();
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('executive-data', JSON.stringify(data));
+        }
+
+        // Initialize sample data
+        function initializeSampleData() {
+            data.tasks = [
+                // Category: Lokaler
+                { id: 'cat-lokaler', title: 'Lokaler', description: '', parentId: null, status: 'active', type: 'category', assignees: [], progress: 0, startDate: '2025-11-07', endDate: '2025-12-31' },
+                { id: 'task-1', title: 'Hyreskontrakt', description: 'Förhandla och signera hyreskontrakt för vårdcentralen', parentId: 'cat-lokaler', status: 'completed', type: 'standard', assignees: ['Martin', 'Jesper', 'Darek'], progress: 100, startDate: '2025-11-07', endDate: '2025-11-07' },
+                { id: 'task-2', title: 'Planlösning/renovering', description: 'Planera layout och renovering av lokalerna', parentId: 'cat-lokaler', status: 'active', type: 'standard', assignees: ['Martin', 'Jesper', 'Darek'], progress: 30, startDate: '2025-11-07', endDate: '2025-11-14' },
+                { id: 'task-3', title: 'IKEA möbler', description: 'Beställa och montera möbler från IKEA', parentId: 'cat-lokaler', status: 'active', type: 'standard', assignees: ['Martin', 'Jesper', 'Darek'], progress: 20, startDate: '2025-11-14', endDate: '2025-11-24' },
+                { id: 'task-4', title: 'Medicinteknisk utrustning', description: 'Inköp av medicinteknisk utrustning', parentId: 'cat-lokaler', status: 'active', type: 'standard', assignees: ['Martin', 'Darek'], progress: 10, startDate: '2025-11-20', endDate: '2025-12-15' },
+                { id: 'task-5', title: 'Städutrustning', description: 'Beställa städutrustning och förbrukningsmaterial', parentId: 'cat-lokaler', status: 'active', type: 'standard', assignees: ['Jesper'], progress: 0, startDate: '2025-11-25', endDate: '2025-12-10' },
+                { id: 'task-6', title: 'Säkerhetssystem', description: 'Installera larmsystem och brandskydd', parentId: 'cat-lokaler', status: 'active', type: 'standard', assignees: ['Martin', 'Jesper'], progress: 15, startDate: '2025-11-15', endDate: '2025-12-05' },
+                { id: 'task-7', title: 'Skyltning', description: 'Extern och intern skyltning', parentId: 'cat-lokaler', status: 'active', type: 'standard', assignees: ['Jesper'], progress: 5, startDate: '2025-12-01', endDate: '2025-12-20' },
+                { id: 'task-8', title: 'Väntrumsinredning', description: 'Möblera och dekorera väntrum', parentId: 'cat-lokaler', status: 'active', type: 'standard', assignees: ['Martin', 'Jesper'], progress: 25, startDate: '2025-11-18', endDate: '2025-12-10' },
+                { id: 'task-9', title: 'Kontorsmaterial', description: 'Beställa kontorsmaterial och förbrukning', parentId: 'cat-lokaler', status: 'active', type: 'standard', assignees: ['Darek'], progress: 40, startDate: '2025-11-10', endDate: '2025-11-30' },
+                { id: 'task-10', title: 'Parkering', description: 'Ordna parkeringstillstånd för personal och patienter', parentId: 'cat-lokaler', status: 'active', type: 'standard', assignees: ['Martin'], progress: 50, startDate: '2025-11-12', endDate: '2025-12-01' },
+
+                // Category: Personal
+                { id: 'cat-personal', title: 'Personal', description: '', parentId: null, status: 'active', type: 'category', assignees: [], progress: 0, startDate: '2025-11-09', endDate: '2026-01-15' },
+                { id: 'task-11', title: 'Läkare', description: 'Rekrytera läkare till vårdcentralen', parentId: 'cat-personal', status: 'active', type: 'standard', assignees: ['Darek', 'Martin'], progress: 50, startDate: '2025-11-09', endDate: '2025-12-19' },
+                { id: 'task-12', title: 'Dietist', description: 'Rekrytera dietist', parentId: 'cat-personal', status: 'completed', type: 'standard', assignees: ['Darek'], progress: 100, startDate: '2025-11-13', endDate: '2026-01-02' },
+                { id: 'task-13', title: 'Sjuksköterskor', description: 'Rekrytera sjuksköterskor', parentId: 'cat-personal', status: 'active', type: 'standard', assignees: ['Darek', 'Martin'], progress: 40, startDate: '2025-11-10', endDate: '2025-12-20' },
+                { id: 'task-14', title: 'Reception', description: 'Anställa receptionspersonal', parentId: 'cat-personal', status: 'active', type: 'standard', assignees: ['Martin', 'Jesper'], progress: 30, startDate: '2025-11-15', endDate: '2026-01-05' },
+                { id: 'task-15', title: 'Undersköterskor', description: 'Rekrytera undersköterskor', parentId: 'cat-personal', status: 'active', type: 'standard', assignees: ['Darek'], progress: 20, startDate: '2025-11-20', endDate: '2026-01-10' },
+                { id: 'task-16', title: 'Vårdadministratör', description: 'Anställa vårdadministratör', parentId: 'cat-personal', status: 'active', type: 'standard', assignees: ['Martin'], progress: 60, startDate: '2025-11-11', endDate: '2025-12-15' },
+                { id: 'task-17', title: 'Lokalvårdare', description: 'Kontraktera städfirma eller anställa lokalvårdare', parentId: 'cat-personal', status: 'active', type: 'standard', assignees: ['Jesper'], progress: 10, startDate: '2025-12-01', endDate: '2026-01-15' },
+
+                // Category: Vårdval/myndigheter
+                { id: 'cat-vardval', title: 'Vårdval/myndigheter', description: '', parentId: null, status: 'active', type: 'category', assignees: [], progress: 0, startDate: '2025-11-22', endDate: '2026-02-28' },
+                { id: 'task-18', title: 'Ansökan vårdval', description: 'Skicka in ansökan till vårdval', parentId: 'cat-vardval', status: 'completed', type: 'board_decision', assignees: ['Martin'], progress: 100, startDate: '2025-11-22', endDate: '2025-11-27' },
+                { id: 'task-19', title: 'Vårdvalprocess', description: 'Genomgå vårdvalprocessen med region', parentId: 'cat-vardval', status: 'active', type: 'standard', assignees: ['Martin', 'Jesper', 'Darek'], progress: 20, startDate: '2025-11-28', endDate: '2026-01-07' },
+                { id: 'task-20', title: 'IVO-anmälan', description: 'Ansöka till Inspektionen för vård och omsorg', parentId: 'cat-vardval', status: 'active', type: 'board_decision', assignees: ['Martin'], progress: 35, startDate: '2025-12-01', endDate: '2026-01-15' },
+                { id: 'task-21', title: 'Försäkringar', description: 'Teckna patientförsäkring och verksamhetsförsäkringar', parentId: 'cat-vardval', status: 'active', type: 'standard', assignees: ['Jesper'], progress: 45, startDate: '2025-12-05', endDate: '2026-01-20' },
+                { id: 'task-22', title: 'Avtal med regionen', description: 'Förhandla och signera vårdavtal med regionen', parentId: 'cat-vardval', status: 'active', type: 'board_decision', assignees: ['Martin', 'Jesper'], progress: 15, startDate: '2026-01-10', endDate: '2026-02-15' },
+                { id: 'task-23', title: 'Kvalitetsregister', description: 'Ansluta till nationella kvalitetsregister', parentId: 'cat-vardval', status: 'active', type: 'standard', assignees: ['Darek'], progress: 5, startDate: '2026-01-15', endDate: '2026-02-28' },
+
+                // Category: IT-lösning
+                { id: 'cat-it', title: 'IT-lösning', description: '', parentId: null, status: 'active', type: 'category', assignees: [], progress: 0, startDate: '2025-11-24', endDate: '2025-12-20' },
+                { id: 'task-24', title: 'Ärendehanteringssystem', description: 'Välja och implementera ärendehanteringssystem', parentId: 'cat-it', status: 'active', type: 'standard', assignees: ['Jesper', 'Richard', 'Martin'], progress: 25, startDate: '2025-11-24', endDate: '2025-11-27' },
+                { id: 'task-25', title: 'Hemsida för VC', description: 'Utveckla webbplats för vårdcentralen', parentId: 'cat-it', status: 'active', type: 'standard', assignees: ['Jesper', 'Richard', 'Martin'], progress: 50, startDate: '2025-12-02', endDate: '2025-12-05' },
+                { id: 'task-26', title: 'Journalsystem', description: 'Välja och implementera journalsystem', parentId: 'cat-it', status: 'active', type: 'board_decision', assignees: ['Jesper', 'Richard', 'Darek'], progress: 30, startDate: '2025-11-25', endDate: '2025-12-15' },
+                { id: 'task-27', title: 'Bokningssystem', description: 'Implementera online bokningssystem för patienter', parentId: 'cat-it', status: 'active', type: 'standard', assignees: ['Richard', 'Jesper'], progress: 40, startDate: '2025-12-01', endDate: '2025-12-10' },
+                { id: 'task-28', title: 'Nätverksinfrastruktur', description: 'Sätta upp nätverk, servrar och IT-infrastruktur', parentId: 'cat-it', status: 'active', type: 'standard', assignees: ['Richard'], progress: 20, startDate: '2025-11-28', endDate: '2025-12-20' }
+            ];
+
+            // Sample time entries
+            data.timeEntries = [
+                { id: 'time-1', taskId: 'task-1', user: 'Martin', hours: 8, date: '2025-11-07' },
+                { id: 'time-2', taskId: 'task-1', user: 'Jesper', hours: 4, date: '2025-11-07' },
+                { id: 'time-3', taskId: 'task-2', user: 'Martin', hours: 6, date: '2025-11-08' },
+                { id: 'time-4', taskId: 'task-11', user: 'Darek', hours: 12, date: '2025-11-09' },
+                { id: 'time-5', taskId: 'task-25', user: 'Richard', hours: 10, date: '2025-12-02' }
+            ];
+        }
+
+        // Get task by ID
+        function getTask(taskId) {
+            return data.tasks.find(t => t.id === taskId);
+        }
+
+        // Get children of a task
+        function getChildren(taskId) {
+            return data.tasks.filter(t => t.parentId === taskId);
+        }
+
+        // Get root tasks
+        function getRootTasks() {
+            return data.tasks.filter(t => t.parentId === null);
+        }
+
+        // Get total time for a task
+        function getTaskTotalTime(taskId) {
+            return data.timeEntries
+                .filter(e => e.taskId === taskId)
+                .reduce((sum, e) => sum + e.hours, 0);
+        }
+
+        // Validate task dates
+        function validateTaskDates(task) {
+            const result = {
+                valid: true,
+                message: '',
+                conflictingChildren: []
+            };
+
+            // Check start <= end
+            if (task.startDate && task.endDate && task.startDate > task.endDate) {
+                result.valid = false;
+                result.message = 'Startdatum måste vara före slutdatum';
+                return result;
+            }
+
+            // Check parent constraints
+            if (task.parentId) {
+                const parent = getTask(task.parentId);
+                if (parent) {
+                    if (task.startDate < parent.startDate) {
+                        result.valid = false;
+                        result.message = `Startdatum kan inte vara före förälderns startdatum (${parent.startDate})`;
+                        return result;
+                    }
+                    if (task.endDate > parent.endDate) {
+                        result.valid = false;
+                        result.message = `Slutdatum kan inte vara efter förälderns slutdatum (${parent.endDate})`;
+                        return result;
+                    }
+                }
+            }
+
+            // Check children constraints
+            const children = getChildren(task.id);
+            for (const child of children) {
+                if (child.startDate < task.startDate) {
+                    result.valid = false;
+                    result.conflictingChildren.push(child);
+                }
+                if (child.endDate > task.endDate) {
+                    result.valid = false;
+                    result.conflictingChildren.push(child);
+                }
+            }
+
+            if (result.conflictingChildren.length > 0) {
+                result.message = 'Följande underuppgifter har datum utanför förälderns period:\n' +
+                    result.conflictingChildren.map(c => `- ${c.title} (${c.startDate} → ${c.endDate})`).join('\n');
+            }
+
+            return result;
+        }
+
+        // Render task tree
+        function renderTaskTree() {
+            const container = document.getElementById('task-tree-content');
+            container.innerHTML = '';
+
+            const rootTasks = getRootTasks();
+            rootTasks.forEach(task => {
+                renderTaskItem(task, container, 0);
+            });
+        }
+
+        // Render a single task item
+        function renderTaskItem(task, container, level) {
+            const div = document.createElement('div');
+
+            const children = getChildren(task.id);
+            const hasChildren = children.length > 0;
+            const isExpanded = expandedTasks[task.id] !== false; // Default to true
+
+            let classes = 'task-item';
+            if (task.status === 'completed') classes += ' completed';
+            if (task.type === 'category') classes += ' category';
+            if (task.type === 'category') classes += ' ' + task.id;
+            if (selectedTaskId === task.id) classes += ' selected';
+
+            const totalTime = getTaskTotalTime(task.id);
+            const assigneeText = task.assignees.join('/');
+
+            div.className = classes;
+            div.innerHTML = `
+                <span class="expand-icon">${hasChildren ? (isExpanded ? '▼' : '▶') : '  '}</span>
+                <span class="task-title">${task.title}</span>
+                ${assigneeText ? `<span class="task-assignees">${assigneeText}</span>` : ''}
+                <span class="progress-text">${task.progress}%</span>
+                <div class="progress-bar"><div class="progress-fill" style="width: ${task.progress}%"></div></div>
+                <span class="task-dates">${task.startDate} → ${task.endDate}</span>
+                ${totalTime > 0 ? `<span class="task-time">${totalTime}h</span>` : ''}
+            `;
+
+            div.onclick = (e) => {
+                if (e.target.classList.contains('expand-icon') && hasChildren) {
+                    expandedTasks[task.id] = !isExpanded;
+                    renderTaskTree();
+                } else {
+                    selectTask(task.id);
+                }
+            };
+
+            container.appendChild(div);
+
+            // Render children
+            if (hasChildren && isExpanded) {
+                const childContainer = document.createElement('div');
+                childContainer.className = 'task-children';
+                children.forEach(child => {
+                    renderTaskItem(child, childContainer, level + 1);
+                });
+                container.appendChild(childContainer);
+            }
+        }
+
+        // Select a task
+        function selectTask(taskId) {
+            selectedTaskId = taskId;
+            renderTaskTree();
+            renderTaskDetails();
+        }
+
+        // Render task details
+        function renderTaskDetails() {
+            if (!selectedTaskId) return;
+
+            const task = getTask(selectedTaskId);
+            if (!task) return;
+
+            const validation = validateTaskDates(task);
+            const timeEntries = data.timeEntries.filter(e => e.taskId === task.id);
+            const totalTime = getTaskTotalTime(task.id);
+
+            let html = `
+                <h2>${task.title}</h2>
+                <span class="status-badge status-${task.status}">${task.status}</span>
+
+                ${!validation.valid ? `<div class="warning-box">${validation.message}</div>` : ''}
+
+                <div class="detail-field">
+                    <label>Beskrivning</label>
+                    <textarea onchange="updateTaskField('description', this.value)">${task.description}</textarea>
+                </div>
+
+                <div class="detail-field">
+                    <label>Startdatum</label>
+                    <input type="date" value="${task.startDate}" onchange="updateTaskDate('startDate', this.value)" />
+                </div>
+
+                <div class="detail-field">
+                    <label>Slutdatum</label>
+                    <input type="date" value="${task.endDate}" onchange="updateTaskDate('endDate', this.value)" />
+                </div>
+
+                <div class="detail-field">
+                    <label>Tilldelade</label>
+                    <div class="assignee-select">
+                        ${data.users.map(user => `
+                            <label class="assignee-checkbox">
+                                <input type="checkbox" value="${user}"
+                                    ${task.assignees.includes(user) ? 'checked' : ''}
+                                    onchange="updateAssignees()">
+                                ${user}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="detail-field">
+                    <label>Framsteg (%)</label>
+                    <div class="progress-input">
+                        <input type="number" min="0" max="100" value="${task.progress}"
+                            onchange="updateTaskField('progress', parseInt(this.value))" />
+                        <div class="progress-bar" style="flex: 1; height: 20px;">
+                            <div class="progress-fill" style="width: ${task.progress}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-field">
+                    <label>Status</label>
+                    <select onchange="updateTaskField('status', this.value)" value="${task.status}">
+                        <option value="active" ${task.status === 'active' ? 'selected' : ''}>Active</option>
+                        <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
+                        <option value="inactive" ${task.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                    </select>
+                </div>
+
+                <div class="time-entries">
+                    <h3>Tidsregistreringar (Total: ${totalTime}h)</h3>
+                    ${timeEntries.map(entry => `
+                        <div class="time-entry">
+                            <span>${entry.user} - ${entry.date}</span>
+                            <span>${entry.hours}h</span>
+                        </div>
+                    `).join('')}
+                    <button class="button" onclick="addTimeEntry()" style="margin-top: 10px;">+ Lägg till tid</button>
+                </div>
+
+                <div class="button-group">
+                    ${task.status !== 'completed' ? `
+                        <button class="button success" onclick="markTaskComplete()">Markera klar</button>
+                    ` : ''}
+                    ${task.type !== 'category' ? `
+                        <button class="button" onclick="addSubtask()">+ Underuppgift</button>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('task-details-content').innerHTML = html;
+        }
+
+        // Update task field
+        function updateTaskField(field, value) {
+            const task = getTask(selectedTaskId);
+            if (task) {
+                task[field] = value;
+                saveData();
+                renderTaskTree();
+                renderTaskDetails();
+            }
+        }
+
+        // Update task date
+        function updateTaskDate(field, value) {
+            const task = getTask(selectedTaskId);
+            if (task) {
+                task[field] = value;
+                const validation = validateTaskDates(task);
+
+                if (!validation.valid) {
+                    alert('⚠️ Datumvalidering misslyckades:\n\n' + validation.message);
+                    renderTaskDetails();
+                    return;
+                }
+
+                saveData();
+                renderTaskTree();
+                renderTaskDetails();
+            }
+        }
+
+        // Update assignees
+        function updateAssignees() {
+            const task = getTask(selectedTaskId);
+            if (task) {
+                const checkboxes = document.querySelectorAll('.assignee-checkbox input:checked');
+                task.assignees = Array.from(checkboxes).map(cb => cb.value);
+                saveData();
+                renderTaskTree();
+                renderTaskDetails();
+            }
+        }
+
+        // Mark task complete
+        function markTaskComplete() {
+            const task = getTask(selectedTaskId);
+            if (task) {
+                task.status = 'completed';
+                task.progress = 100;
+                saveData();
+                renderTaskTree();
+                renderTaskDetails();
+            }
+        }
+
+        // Add subtask
+        function addSubtask() {
+            const parent = getTask(selectedTaskId);
+            if (!parent) return;
+
+            const title = prompt('Titel för ny underuppgift:');
+            if (!title) return;
+
+            const newTask = {
+                id: 'task-' + Date.now(),
+                title: title,
+                description: '',
+                parentId: parent.id,
+                status: 'active',
+                type: 'standard',
+                assignees: [],
+                progress: 0,
+                startDate: parent.startDate,
+                endDate: parent.endDate
+            };
+
+            data.tasks.push(newTask);
+            expandedTasks[parent.id] = true;
+            saveData();
+            renderTaskTree();
+            selectTask(newTask.id);
+        }
+
+        // Add new root task
+        function addNewRootTask() {
+            const title = prompt('Titel för ny uppgift:');
+            if (!title) return;
+
+            const today = new Date().toISOString().split('T')[0];
+            const newTask = {
+                id: 'task-' + Date.now(),
+                title: title,
+                description: '',
+                parentId: null,
+                status: 'active',
+                type: 'standard',
+                assignees: [],
+                progress: 0,
+                startDate: today,
+                endDate: today
+            };
+
+            data.tasks.push(newTask);
+            saveData();
+            renderTaskTree();
+            selectTask(newTask.id);
+        }
+
+        // Add time entry
+        function addTimeEntry() {
+            const hours = parseFloat(prompt('Antal timmar:'));
+            if (!hours || hours <= 0) return;
+
+            const date = prompt('Datum (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            if (!date) return;
+
+            const entry = {
+                id: 'time-' + Date.now(),
+                taskId: selectedTaskId,
+                user: data.currentUser,
+                hours: hours,
+                date: date
+            };
+
+            data.timeEntries.push(entry);
+            saveData();
+            renderTaskDetails();
+            renderTaskTree();
+        }
+
+        // Switch tab
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            // Render specific content
+            if (tabName === 'meeting') {
+                renderMeetingView();
+            }
+        }
+
+        // Render meeting view
+        function renderMeetingView() {
+            const activeTasks = data.tasks.filter(t => t.status === 'active' && t.type !== 'category');
+
+            let html = '';
+            activeTasks.forEach(task => {
+                const parent = task.parentId ? getTask(task.parentId) : null;
+                const totalTime = getTaskTotalTime(task.id);
+
+                html += `
+                    <div class="meeting-task">
+                        <h3>${task.title}</h3>
+                        ${parent ? `<p><strong>Kategori:</strong> ${parent.title}</p>` : ''}
+                        <p><strong>Tilldelade:</strong> ${task.assignees.join(', ')}</p>
+                        <p><strong>Framsteg:</strong> ${task.progress}%</p>
+                        <p><strong>Period:</strong> ${task.startDate} → ${task.endDate}</p>
+                        <p><strong>Tidsåtgång:</strong> ${totalTime}h</p>
+                        ${task.description ? `<p><strong>Beskrivning:</strong> ${task.description}</p>` : ''}
+                    </div>
+                `;
+            });
+
+            document.getElementById('meeting-content').innerHTML = html || '<p>Inga aktiva uppgifter</p>';
+        }
+
+        // Generate board meeting agenda
+        function generateDagordning() {
+            const boardTasks = data.tasks.filter(t => t.type === 'board_decision');
+            const today = new Date().toISOString().split('T')[0];
+
+            let agenda = `DAGORDNING - STYRELSEMÖTE
+${today}
+
+1. Mötets öppnande
+2. Val av ordförande och sekreterare
+3. Godkännande av dagordning
+4. Val av protokolljusterare
+
+`;
+
+            boardTasks.forEach((task, index) => {
+                agenda += `${5 + index}. ${task.title}\n`;
+                if (task.description) {
+                    agenda += `   Bakgrund: ${task.description}\n`;
+                }
+                agenda += `   Status: ${task.status} (${task.progress}%)\n`;
+                agenda += `   Ansvariga: ${task.assignees.join(', ')}\n\n`;
+            });
+
+            agenda += `${5 + boardTasks.length}. Övriga frågor
+${6 + boardTasks.length}. Mötets avslutande`;
+
+            document.getElementById('agenda-output').innerHTML = `<div class="agenda-output">${agenda}</div>`;
+        }
+
+        // Initialize on load
+        window.onload = init;
+    </script>
+</body>
+</html>
